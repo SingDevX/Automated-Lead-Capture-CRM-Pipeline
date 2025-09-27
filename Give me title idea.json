@@ -1,0 +1,358 @@
+{
+  "name": "Give me title idea",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1Kq-_F3U_ZRLNt0lfj9owDKU4iksBAeyiDIw2sDT8Lx4",
+          "mode": "list",
+          "cachedResultName": "Lead Capture Form (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kq-_F3U_ZRLNt0lfj9owDKU4iksBAeyiDIw2sDT8Lx4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1226083503,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kq-_F3U_ZRLNt0lfj9owDKU4iksBAeyiDIw2sDT8Lx4/edit#gid=1226083503"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "995cda6d-2086-4d4b-b52c-d04efd95dc90",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "qT7Ntpxotc4lVeP9",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process ALL items from the input\nconst items = $input.all();\n\n// Map through each item and clean the data\nreturn items.map(item => ({\n  first_name: item.json['First Name']?.toString().trim() || '',\n  last_name: item.json['Last Name']?.toString().trim() || '',\n  email: item.json['Email']?.toString().toLowerCase().trim() || '',\n  phone: item.json['Phone Number']?.toString().trim() || '',\n  company: item.json['Company']?.toString().trim() || '',\n  lead_source: item.json['How did you hear about us?']?.toString().trim() || 'Unknown',\n  lead_status: 'new',\n  lead_score: 0\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "b9aeacd1-a28e-4e99-af49-1126eaa1184c",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as count FROM contacts WHERE email = '{{ $json.email }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "603fc8f9-75e9-4c90-a1ff-6d80588f462e",
+      "name": "Execute a SQL query1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DvXduRwFUV2o0DwH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "efcd8c7c-232d-434e-9473-83ad167db4ff",
+              "leftValue": "={{ $('Execute a SQL query1').item.json.count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "04dba2da-fe95-42a3-b5c6-7874230c5677",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "contacts",
+          "mode": "list",
+          "cachedResultName": "contacts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "last_name": "={{ $('Code').item.json.last_name }}",
+            "email": "={{ $('Code').item.json.email }}",
+            "phone": "={{ $('Code').item.json.phone }}",
+            "company": "={{ $('Code').item.json.company }}",
+            "lead_source": "={{ $('Code').item.json.lead_source }}",
+            "lead_status": "={{ $('Code').item.json.lead_status }}",
+            "lead_score": "={{ $('Code').item.json.lead_score }}",
+            "first_name": "={{ $('Code').item.json.first_name }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_name",
+              "displayName": "last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_source",
+              "displayName": "lead_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_status",
+              "displayName": "lead_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        912,
+        -112
+      ],
+      "id": "f8d95af1-763d-4493-a224-1f8e64e7f023",
+      "name": "Insert rows in a table",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DvXduRwFUV2o0DwH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "zandergarcia552@gmail.com",
+        "subject": "=New Lead: {{ $('Code').item.json.first_name }} {{ $('Code').item.json.last_name }}",
+        "message": "=New lead captured!\n\nName: {{ $('Code').item.json.first_name }} {{ $('Code').item.json.last_name }}\nEmail: {{ $('Code').item.json.email }}\nPhone: {{ $('Code').item.json.phone }}\nCompany: {{ $('Code').item.json.company }}\nSource: {{ $('Code').item.json.lead_source }}\n\nLead ID: {{ $('Insert rows in a table').item.json.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1104,
+        -112
+      ],
+      "id": "c070ed24-deb6-4f8d-96e8-4b69702fe8bb",
+      "name": "Send a message",
+      "webhookId": "6e79f3c9-74db-4399-bdda-d6898818456d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9RfHlmEN6Ut9OkKg",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e971bf81-2cfd-4a5a-ab20-c80d2c165dbb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "57b797f1b61933ba0d45a41ffb1938de2b9579018eea67ae0f339feb4729f378"
+  },
+  "id": "pW1slifxbuHjmlMF",
+  "tags": []
+}
